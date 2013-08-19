@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbHidrator", "DbHidrator\Db
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unit test", "Unit test\Unit test.csproj", "{DDED78ED-0447-430C-A369-1D5DFFAEF5DB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbHidratorClient", "DbHidratorClient\DbHidratorClient.csproj", "{B38BF86E-DB97-4256-893A-63CC7879B28A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,6 +21,10 @@ Global
 		{DDED78ED-0447-430C-A369-1D5DFFAEF5DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDED78ED-0447-430C-A369-1D5DFFAEF5DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDED78ED-0447-430C-A369-1D5DFFAEF5DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B38BF86E-DB97-4256-893A-63CC7879B28A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B38BF86E-DB97-4256-893A-63CC7879B28A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B38BF86E-DB97-4256-893A-63CC7879B28A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B38BF86E-DB97-4256-893A-63CC7879B28A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

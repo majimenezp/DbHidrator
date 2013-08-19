@@ -7,6 +7,8 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DbHidrator
 {
@@ -18,11 +20,13 @@ namespace DbHidrator
         private DbProviderFactory factory;
         private DbConnection conn;
         private static Random random = new Random((int)DateTime.Now.Ticks);
+        private static object insertLock = new object();
         public DbHidratorClient(string connectionString, string providerName)
         {
             this.connStr = connectionString;
             this.provName = providerName;
             this.tables = new List<Table>();
+            
         }
 
         public void GenerateSchema()
@@ -38,8 +42,6 @@ namespace DbHidrator
 
             }
         }
-
-
 
         private void CreateColumns(DataTable dtColumns)
         {
@@ -87,6 +89,7 @@ namespace DbHidrator
 
         private void GetSchema(out DataTable dtTables, out DataTable dtColumns)
         {
+            //var factories=DbProviderFactories.GetFactoryClasses();
             this.factory = DbProviderFactories.GetFactory(provName);
             conn = factory.CreateConnection();
             conn.ConnectionString = connStr;
@@ -96,33 +99,12 @@ namespace DbHidrator
             conn.Close();
         }
 
-        public void GenerateNRows(int rows, string[] tables)
-        {
-            var filteredTables = this.tables.Where(x => tables.Contains(x.Name, StringComparer.InvariantCultureIgnoreCase)).ToList();
-            foreach (var table in filteredTables)
-            {
-                CreateQueries(table);
-            }
-
-            foreach (var table in filteredTables)
-            {
-                var list = CreateListType(table);
-                for (int i = 0; i < rows; i++)
-                {
-                    var reg = CreateRow(table);
-                    list.Add(reg);
-                }
-                InsertRows(table, conn, list);
-            }
-
-        }
-
         private void InsertRows(Table table, DbConnection conn, IList list)
         {
             int i = 0;
             var command = table.InsertCommand;
-            var columns=table.Columns.OrderBy(x=>x.Id).ToList();
-            int cantColumns=columns.Count;
+            var columns = table.Columns.OrderBy(x => x.Id).ToList();
+            int cantColumns = columns.Count;
             conn.Open();
             using (var trans = conn.BeginTransaction())
             {
@@ -235,6 +217,82 @@ namespace DbHidrator
                 }
             }
             return elements;
+        }
+
+        public string[] GetTablesNames()
+        {
+            return tables.Select(x => x.Name).ToArray();
+        }
+
+        public void GenerateRowsInRandomTimes(int rows, string[] tablesNames)
+        {
+            Dictionary<string, IList> dataGenerated = new Dictionary<string, IList>();
+            var filteredTables = this.tables.Where(x => tablesNames.Contains(x.Name, StringComparer.InvariantCultureIgnoreCase)).ToList();
+            foreach (var table in filteredTables)
+            {
+                CreateQueries(table);
+            }
+
+            foreach (var table in filteredTables)
+            {
+                var list = CreateListType(table);
+                for (int i = 0; i < rows; i++)
+                {
+                    var reg = CreateRow(table);
+                    list.Add(reg);
+                }
+                dataGenerated.Add(table.Name, list);
+            }
+            conn.Open();
+            Parallel.ForEach(dataGenerated, data =>
+            {
+                var table1 = filteredTables.FirstOrDefault(x => x.Name == data.Key);
+                Parallel.ForEach(data.Value.Cast<object>(), reg =>
+                {
+                    Thread.Sleep(random.Next(100, 3000));
+                    InsertRow(table1, conn, reg);
+                });
+            });
+            
+            conn.Close();
+        }
+
+        private void InsertRow(Table table, DbConnection conn, object reg)
+        {
+            int i = 0;
+            var command = table.InsertCommand;
+            var columns = table.Columns.OrderBy(x => x.Id).ToList();
+            int cantColumns = columns.Count;
+            lock (insertLock)
+            {
+                for (i = 0; i < cantColumns; i++)
+                {
+                    command.Parameters[i].Value = columns[i].ClassProperty.GetValue(reg, null);
+                }
+                command.ExecuteNonQuery();
+            }
+
+        }
+
+        public void GenerateNRows(int rows, string[] tables)
+        {
+            var filteredTables = this.tables.Where(x => tables.Contains(x.Name, StringComparer.InvariantCultureIgnoreCase)).ToList();
+            foreach (var table in filteredTables)
+            {
+                CreateQueries(table);
+            }
+
+            foreach (var table in filteredTables)
+            {
+                var list = CreateListType(table);
+                for (int i = 0; i < rows; i++)
+                {
+                    var reg = CreateRow(table);
+                    list.Add(reg);
+                }
+                InsertRows(table, conn, list);
+            }
+
         }
     }
 }

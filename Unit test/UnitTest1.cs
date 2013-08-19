@@ -19,6 +19,7 @@ namespace Unit_test
             var tables=conn.GetSchema("Tables");
             var columns = conn.GetSchema("Columns");
             conn.Close();
+
         }
 
         [TestMethod]
